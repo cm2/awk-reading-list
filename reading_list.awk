@@ -8,14 +8,14 @@
 
 BEGIN {
 	# use pattern to detect csv fields 
-	FPAT="([^,]*)|(\"[^\"]+\")";
+	FPAT="([^,]*)|(\"([^\"]|\"\")*\")|(\"=\"\"\"\"\")";
 }
 
 
 # use to get the field numbers
 # change to NR 1 if you want to see the reference
 # change to NR 0 if you dont want to see the reference
-NR==1 {
+NR==0 {
 	print "REFERENCE"
 	for (i=1; i<=NF; i++)
 		print i "\t " $i;
@@ -28,8 +28,8 @@ NR==2, NR==max {
 	# if there's a date read, add the book to the list for the year
 	date_read = $15
 	bookshelves = $17
-
-	if (date_read) {
+	
+	if (date_read || $19 =="read") {
 		# use the date read for collecting the book (unreliable since
 		# we only have one read date in the file) since the csv only
 		# has one date read derive the years read by the actual date
@@ -37,8 +37,10 @@ NR==2, NR==max {
 		# NOTE: does not account for multiple reads in one year
 
 		# add the date read
-		year = substr(date_read,1,4)
-		years[year] = year
+		if (date_read) {
+			year = substr(date_read,1,4)
+			years[year] = year
+		}
 
 		# add the date read from bookshelves
 		split(bookshelves, list_shelves, ",")
@@ -55,7 +57,7 @@ NR==2, NR==max {
 			title = $2
 			author = $3
 			gsub(/"/,"", title)
-			read[year][$1] = title " - " author
+			read[year][$1] = "**" title "** - " author
 		}
 		delete years
 
@@ -66,15 +68,15 @@ NR==2, NR==max {
 		title = $2
 		author = $3
 		gsub(/"/,"", title)
-		reading[NR] = title " - " author
+		reading[NR] = "**" title "** - " author
 	}
 }
 
 # PART 2: display the reading list
 END {
-	line_prefix = "\t - "
+	line_prefix = "  - "
 	# print the list of books I'm currently reading
-	print "Currently Reading"
+	print "## Currently Reading"
 	for (book in reading)
 		print line_prefix reading[book]
 
@@ -84,9 +86,14 @@ END {
 	for (; n > 0; n--) {
 		year = sorted[n]
 		numread = length(read[year])
-		print year " readling list (" numread  ")"
+		print "## "year " readling list (" numread  ")"
 		for (book in read[year]) {
 			print line_prefix read[year][book]
 		}
 	}
+
+	# generated footer
+	print ""
+	print ""
+	print "Reading list generated " strftime("%FT%T%z")
 }
