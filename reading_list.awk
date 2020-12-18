@@ -57,6 +57,7 @@ NR==2, NR==max {
 			title = $2
 			author = $3
 			gsub(/"/,"", title)
+			gsub(/*/,"\\*", title)
 			read[year][$1] = "**" title "** - " author
 		}
 		delete years
@@ -68,12 +69,19 @@ NR==2, NR==max {
 		title = $2
 		author = $3
 		gsub(/"/,"", title)
+		gsub(/*/,"\\*", title)
 		reading[NR] = "**" title "** - " author
 	}
 }
 
 # PART 2: display the reading list
 END {
+	print "---"
+	print "title: Reading List"
+	print "created: " strftime("%FT%T%z")
+	print "---"
+	print ""
+
 	line_prefix = "  - "
 	# print the list of books I'm currently reading
 	print "## Currently Reading"
@@ -92,8 +100,4 @@ END {
 		}
 	}
 
-	# generated footer
-	print ""
-	print ""
-	print "Reading list generated " strftime("%FT%T%z")
 }
